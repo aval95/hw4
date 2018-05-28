@@ -181,8 +181,8 @@ public class Database {
     }//getHireList
     
     
-    public static ArrayList<Offer> getOffersWithPoints(int points) {
-        if(points < 0)
+    public static ArrayList<Offer> getOffersWithPoints(String customer) {
+        if(customer == null)
             return null;
         if(conn == null) {
             System.err.println("Connection to database not yet established. Connect to database before doing queries");
@@ -190,7 +190,7 @@ public class Database {
         }//if
         ResultSet rs = null;
         ArrayList<Offer> list = new ArrayList<>();
-        String sql = "SELECT * FROM mbt.Offer AS O WHERE O.reward_cost <= (SELECT C.current_points FROM mbt.Card AS C WHERE C.card_id = ?);";
+        String sql = "SELECT * FROM mbt.Offer AS O WHERE O.reward_cost <= (SELECT C.current_points FROM mbt.Card AS C WHERE C.card_id = ?::uuid);";
         PreparedStatement pstmtOfferList = null;
         
         int offer_id;
@@ -204,7 +204,7 @@ public class Database {
             end = System.currentTimeMillis();
             System.out.printf("Statement successfully created in %,d milliseconds\n", end-start);
             
-            pstmtOfferList.setInt(1, points);
+            pstmtOfferList.setString(1, customer);
             
             start = System.currentTimeMillis();
             rs = pstmtOfferList.executeQuery();

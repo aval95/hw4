@@ -20,7 +20,7 @@ public class Application {
         }//for
         
         //Query 3
-        ArrayList<Offer> offerList = Database.getOffersWithPoints(100);
+        ArrayList<Offer> offerList = Database.getOffersWithPoints("19f8c9c8-14b2-43d9-b6a5-1d07268e840e");
         for(Offer offer:offerList) {
             System.out.println(offer);
         }//for
