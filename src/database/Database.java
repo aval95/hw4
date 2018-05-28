@@ -12,8 +12,8 @@ import struct.Hire;
 import struct.Offer;
 
 /**
- *
- * @author Alex
+ * Class representing the database, it provides all methods for some of the principal queries
+ * @author myBike Team
  */
 public class Database {
     private static Connection conn = null;
@@ -27,6 +27,15 @@ public class Database {
     private static final String DATABASE = "jdbc:postgresql://localhost:5433/dbms1718";
     private static final String USER = "webdb";
     private static final String PASSWORD = "webdb";
+    
+    static {
+        try{
+            Class.forName(DRIVER);
+            System.out.printf("Driver %s successfully registered\n", DRIVER);
+        } catch(ClassNotFoundException e) {
+            System.err.printf("Error while loading DB driver %s\n %s", DRIVER, e.getMessage());
+        }//try catch
+    }//static
     
     /**
      * Constructor of the class representing the Database
@@ -181,8 +190,8 @@ public class Database {
     }//getHireList
     
     
-    public static ArrayList<Offer> getOffersWithPoints(String customer) {
-        if(customer == null)
+    public static ArrayList<Offer> getOffersWithPoints(String card_id, int organization) {
+        if(card_id == null || organization <= 0)
             return null;
         if(conn == null) {
             System.err.println("Connection to database not yet established. Connect to database before doing queries");
@@ -190,7 +199,7 @@ public class Database {
         }//if
         ResultSet rs = null;
         ArrayList<Offer> list = new ArrayList<>();
-        String sql = "SELECT * FROM mbt.Offer AS O WHERE O.reward_cost <= (SELECT C.current_points FROM mbt.Card AS C WHERE C.card_id = ?::uuid);";
+        String sql = "SELECT * FROM mbt.Offer AS O WHERE O.reward_cost <= (SELECT C.current_points FROM mbt.Card AS C WHERE C.card_id = ? AND C.organization = ?);";
         PreparedStatement pstmtOfferList = null;
         
         int offer_id;
@@ -204,7 +213,8 @@ public class Database {
             end = System.currentTimeMillis();
             System.out.printf("Statement successfully created in %,d milliseconds\n", end-start);
             
-            pstmtOfferList.setString(1, customer);
+            pstmtOfferList.setString(1, card_id);
+            pstmtOfferList.setInt(2, organization);
             
             start = System.currentTimeMillis();
             rs = pstmtOfferList.executeQuery();
@@ -350,7 +360,7 @@ public class Database {
         String sql = "SELECT C.customer_id, C.name, C.surname, CD.card_id, CD.organization FROM mbt.Customer AS C INNER JOIN mbt.Card AS CD ON C.customer_id = CD.customer WHERE CD.enabled = true;";
         Statement stmt = null;
         
-        int customer_id;
+        String customer_id;
         String customer_name;
         String customer_surname;
         String card_id;
@@ -368,7 +378,7 @@ public class Database {
             System.out.printf("Query successfully executed in %,d milliseconds\n", end-start);
             
             while(rs.next()) {
-                customer_id = rs.getInt("customer_id");
+                customer_id = rs.getString("customer_id");
                 customer_name = rs.getString("name");
                 customer_surname = rs.getString("surname");
                 card_id = rs.getString("card_id");

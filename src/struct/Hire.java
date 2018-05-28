@@ -1,8 +1,8 @@
 package struct;
 
 /**
- *
- * @author Alex
+ * Class representing a row of Hire table
+ * @author myBike Team
  */
 public class Hire {
     private int hire_id;
