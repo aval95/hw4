@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import struct.DockingStationUsage;
 import struct.Hire;
 import struct.Offer;
 
@@ -261,6 +262,83 @@ public class Database {
         }//try catch finally
         return list;
     }//getOffersWithPoints
+    
+    public static String getDockingStationsUsage() {
+        if(conn == null) {
+            System.err.println("Connection to database not yet established. Connect to database before doing queries");
+            return null;
+        }//if
+        ResultSet rs = null;
+        String usage = "";
+        String sql = "SELECT DS.docking_station_id, DS.station_name, COUNT(*) AS number_of_unlocks FROM mbt.Hire AS H LEFT JOIN mbt.DockingPoint AS DP ON H.Docking_point_unlock = DP.docking_point_id LEFT JOIN mbt.DockingStation AS DS ON DP.docking_station = DS.docking_station_id GROUP BY DS.docking_station_id  ORDER BY number_of_unlocks DESC;";
+        Statement stmt = null;
+        
+        int docking_station_id;
+        String station_name;
+        int number_of_unlocks;
+        
+        try {
+            start = System.currentTimeMillis();
+            stmt = conn.createStatement();
+            end = System.currentTimeMillis();
+            System.out.printf("Statement successfully created in %,d milliseconds\n", end-start);
+            
+            start = System.currentTimeMillis();
+            rs = stmt.executeQuery(sql);
+            end = System.currentTimeMillis();
+            System.out.printf("Query successfully executed in %,d milliseconds\n", end-start);
+            
+            while(rs.next()) {
+                docking_station_id = rs.getInt("docking_station_id");
+                station_name = rs.getString("station_name");
+                number_of_unlocks = rs.getInt("number_of_unlocks");
+                DockingStationUsage dsu = new DockingStationUsage(docking_station_id, station_name, number_of_unlocks);
+                usage += dsu + "\n";
+            }//while
+        } catch(SQLException e) {
+            System.err.printf("Error executing query %s\n", stmt);
+            while(e != null) {
+                System.out.printf("- Message: %s\n", e.getMessage());
+                System.out.printf("- SQL status code: %s\n", e.getSQLState());
+                System.out.printf("- SQL error code: %s\n", e.getErrorCode());
+                System.out.println();
+                e = e.getNextException();
+            }//while
+        } finally {
+            try {
+                if(rs != null) {
+                    start = System.currentTimeMillis();
+                    rs.close();
+                    end = System.currentTimeMillis();
+                    System.out.printf("Result set successfully closed in %,d milliseconds\n", end-start);
+                }//if rs
+                
+                if(stmt != null) {
+                    start = System.currentTimeMillis();
+                    stmt.close();
+                    end = System.currentTimeMillis();
+                    System.out.printf("Statement successfully closed in %,d milliseconds\n", end-start);
+                }//if pstmt
+                
+                System.out.println("Resources successfully released");
+            } catch (SQLException e) {
+                System.err.println("Error while releasing resources");
+                while(e != null) {
+                    System.out.printf("- Message: %s\n", e.getMessage());
+                    System.out.printf("- SQL status code: %s\n", e.getSQLState());
+                    System.out.printf("- SQL error code: %s\n", e.getErrorCode());
+                    System.out.println();
+                    e = e.getNextException();
+                }//while
+            } finally {
+                rs = null;
+                stmt = null;
+                
+                System.out.println("Resources released to the garbage collector");
+            }//try catch finally
+        }//try catch finally
+        return usage;
+    }//getDockingStationsUsage
     
     
 }

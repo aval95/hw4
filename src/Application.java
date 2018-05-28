@@ -16,5 +16,9 @@ public class Application {
         for(Hire hire:list) {
             System.out.println(hire);
         }//for
+        
+        System.out.print(Database.getDockingStationsUsage());
+        
+        Database.close();
     }
 }
