@@ -190,7 +190,7 @@ public class Database {
         }//if
         ResultSet rs = null;
         ArrayList<Offer> list = new ArrayList<>();
-        String sql = "SELECT * FROM Offer AS O WHERE O.reward_cost <= (SELECT C.current_points FROM Card AS C WHERE C.card_id = ?);";
+        String sql = "SELECT * FROM mbt.Offer AS O WHERE O.reward_cost <= (SELECT C.current_points FROM mbt.Card AS C WHERE C.card_id = ?);";
         PreparedStatement pstmtOfferList = null;
         
         int offer_id;
@@ -339,6 +339,86 @@ public class Database {
         }//try catch finally
         return usage;
     }//getDockingStationsUsage
+    
+    public static String getEnabledCustomerCards() {
+        if(conn == null) {
+            System.err.println("Connection to database not yet established. Connect to database before doing queries");
+            return null;
+        }//if
+        ResultSet rs = null;
+        String usage = "";
+        String sql = "SELECT C.customer_id, C.name, C.surname, CD.card_id, CD.organization FROM mbt.Customer AS C INNER JOIN mbt.Card AS CD ON C.customer_id = CD.customer WHERE CD.enabled = true;";
+        Statement stmt = null;
+        
+        int customer_id;
+        String customer_name;
+        String customer_surname;
+        String card_id;
+        int organization;
+        
+        try {
+            start = System.currentTimeMillis();
+            stmt = conn.createStatement();
+            end = System.currentTimeMillis();
+            System.out.printf("Statement successfully created in %,d milliseconds\n", end-start);
+            
+            start = System.currentTimeMillis();
+            rs = stmt.executeQuery(sql);
+            end = System.currentTimeMillis();
+            System.out.printf("Query successfully executed in %,d milliseconds\n", end-start);
+            
+            while(rs.next()) {
+                customer_id = rs.getInt("customer_id");
+                customer_name = rs.getString("name");
+                customer_surname = rs.getString("surname");
+                card_id = rs.getString("card_id");
+                organization = rs.getInt("organization");
+                usage += "EnabledCustomerCard{" + "customer_id=" + customer_id + ", name=" + customer_name + ", surname=" + customer_surname + ", card_id=" + card_id + ", organization=" + organization + "}\n";
+            }//while
+        } catch(SQLException e) {
+            System.err.printf("Error executing query %s\n", stmt);
+            while(e != null) {
+                System.out.printf("- Message: %s\n", e.getMessage());
+                System.out.printf("- SQL status code: %s\n", e.getSQLState());
+                System.out.printf("- SQL error code: %s\n", e.getErrorCode());
+                System.out.println();
+                e = e.getNextException();
+            }//while
+        } finally {
+            try {
+                if(rs != null) {
+                    start = System.currentTimeMillis();
+                    rs.close();
+                    end = System.currentTimeMillis();
+                    System.out.printf("Result set successfully closed in %,d milliseconds\n", end-start);
+                }//if rs
+                
+                if(stmt != null) {
+                    start = System.currentTimeMillis();
+                    stmt.close();
+                    end = System.currentTimeMillis();
+                    System.out.printf("Statement successfully closed in %,d milliseconds\n", end-start);
+                }//if pstmt
+                
+                System.out.println("Resources successfully released");
+            } catch (SQLException e) {
+                System.err.println("Error while releasing resources");
+                while(e != null) {
+                    System.out.printf("- Message: %s\n", e.getMessage());
+                    System.out.printf("- SQL status code: %s\n", e.getSQLState());
+                    System.out.printf("- SQL error code: %s\n", e.getErrorCode());
+                    System.out.println();
+                    e = e.getNextException();
+                }//while
+            } finally {
+                rs = null;
+                stmt = null;
+                
+                System.out.println("Resources released to the garbage collector");
+            }//try catch finally
+        }//try catch finally
+        return usage;
+    }//getEnabledCustomerCards
     
     
 }
